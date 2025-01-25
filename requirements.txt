@@ -1,2 +1,2 @@
 flask
-pip install telebot
+pip install python-telegram-bot --upgrade
