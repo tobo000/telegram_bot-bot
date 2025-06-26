@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-
-#!/usr/bin/env python
-
 import os
 import telebot
 from keep_alive import keep_alive
@@ -9,7 +6,7 @@ from keep_alive import keep_alive
 keep_alive()
 
 # Get bot token from environment variable
-bot_token = os.environ.get("7288959855:AAGVVGAxeTrYzQMbsb-h__8CGTi2SJjVpe4")
+bot_token = os.environ.get("BOT_TOKEN")
 if not bot_token:
     raise ValueError("No BOT_TOKEN found. Make sure it's set in Render environment variables.")
 
