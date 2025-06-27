@@ -1,40 +1,59 @@
+#!/usr/bin/env python3
 import os
-import telebot
-import requests
 import logging
+import requests
+import telebot
+from telebot.apihelper import ApiTelegramException
 
-# Logging
-logging.basicConfig(level=logging.INFO)
+# ✅ Logging setup
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO
+)
 
+# ✅ Load BOT_TOKEN securely
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN not found!")
+    raise ValueError("❌ BOT_TOKEN not found. Please set it in your environment.")
 
+# ✅ Initialize bot
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Clear webhook
+# ✅ Clear existing webhook to avoid 409 error
 def clear_webhook():
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook"
     try:
-        r = requests.get(url)
-        if r.ok:
-            logging.info("✅ Webhook cleared.")
+        res = requests.get(url)
+        if res.status_code == 200 and res.json().get("ok"):
+            logging.info("✅ Webhook cleared successfully.")
         else:
-            logging.warning(f"⚠️ Failed to clear webhook: {r.text}")
-    except Exception as e:
-        logging.error(f"⚠️ Error clearing webhook: {e}")
+            logging.warning(f"⚠️ Webhook not cleared: {res.text}")
+    except requests.RequestException as e:
+        logging.error(f"⚠️ Telegram API connection failed: {e}")
 
-# Commands
+# ✅ /start command
 @bot.message_handler(commands=['start'])
-def start(message):
-    bot.reply_to(message, "👋 Welcome! Send /id to get your chat ID.")
+def handle_start(message):
+    bot.reply_to(message, "👋 Welcome to Chat ID Bot!\nSend /id to get your Telegram chat ID.")
 
+# ✅ /id command
 @bot.message_handler(commands=['id'])
-def chat_id(message):
-    bot.reply_to(message, f"🆔 Your chat ID: `{message.chat.id}`", parse_mode="Markdown")
+def handle_id(message):
+    chat_id = message.chat.id
+    bot.reply_to(message, f"🆔 Your Chat ID: `{chat_id}`", parse_mode="Markdown")
 
-# Run bot
-if __name__ == "__main__":
+# ✅ Start polling safely
+def run_bot():
     clear_webhook()
-    logging.info("🤖 Bot polling...")
-    bot.polling(non_stop=True)
+    try:
+        bot_info = bot.get_me()
+        logging.info(f"🤖 Bot started as @{bot_info.username}")
+        bot.polling(non_stop=True)
+    except ApiTelegramException as e:
+        if "Conflict" in str(e):
+            logging.error("🚫 Bot conflict: another process is polling.")
+        else:
+            logging.error(f"❌ Telegram API error: {e}")
+        raise  # optional: retry or exit
+
+if __name__ == "__main__":
+    run_bot()
