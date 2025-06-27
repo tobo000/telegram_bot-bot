@@ -14,8 +14,8 @@ def send_welcome(message):
         "Created by @bigboss_global_trade .")
 
 @bot.message_handler(commands=['id'])
-def send_id(message):
-    bot.reply_to(message, f"🆔 Your ID: {message.chat.id}, parse_mode="Markdown")
+def chat_id(message):
+    bot.reply_to(message, f"🆔 Your ID: {message.chat.id}", parse_mode="Markdown")
 
 print("🤖 Bot is polling now...")
 bot.polling(non_stop=True)
