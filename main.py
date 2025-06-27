@@ -9,7 +9,9 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "👋 Welcome to the bot! Send /id to get your ID.")
+    bot.reply_to(message, "🟢 WELCOME TO CHAT ID BOT\n"
+        "Send /id to get your Telegram ID\n"
+        "Created by @bigboss_global_trade .")
 
 @bot.message_handler(commands=['id'])
 def send_id(message):
