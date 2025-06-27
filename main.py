@@ -1,66 +1,64 @@
 #!/usr/bin/env python
 import os
-import telebot
-import logging
 import time
+import logging
 import requests
+import telebot
 from telebot.apihelper import ApiTelegramException
 
-# ✅ Enable logging
+# ✅ Logging setup
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-# ✅ Load token from environment
-bot_token = os.environ.get("BOT_TOKEN")
-if not bot_token:
-    raise ValueError("No BOT_TOKEN found. Make sure it's set in Render environment variables.")
+# ✅ Load bot token
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("❌ BOT_TOKEN not found. Set it in Render environment variables.")
 
-bot = telebot.TeleBot(bot_token)
+# ✅ Initialize bot
+bot = telebot.TeleBot(BOT_TOKEN)
 
 # ✅ /start command
 @bot.message_handler(commands=['start'])
-def wlcm_msg(message):
-    wlcm_text = """  WELCOME TO CHAT ID BOT 
-Send /id command to Get your Id
-created by @bigboss_global_trade"""
-    bot.reply_to(message, wlcm_text)
+def start_command(message):
+    welcome_text = """🟢 WELCOME TO CHAT ID BOT\nSend /id to get your Telegram ID\nCreated by @bigboss_global_trade"""
+    bot.reply_to(message, welcome_text)
 
 # ✅ /id command
 @bot.message_handler(commands=['id'])
-def send_id(message):
+def id_command(message):
     chat_id = message.chat.id
-    bot.reply_to(message, f"Your Id: {chat_id}")
+    bot.reply_to(message, f"🆔 Your Chat ID: `{chat_id}`", parse_mode="Markdown")
 
-# ✅ Clear any existing webhook automatically
+# ✅ Clear any existing webhook to avoid 409 conflict
 def clear_webhook():
-    url = f"https://api.telegram.org/bot{bot_token}/deleteWebhook"
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook"
     try:
         res = requests.get(url, timeout=5)
         if res.status_code == 200 and res.json().get("ok"):
-            logging.info("✅ Webhook cleared successfully.")
+            logging.info("✅ Telegram webhook cleared successfully.")
         else:
             logging.warning(f"⚠️ Failed to clear webhook: {res.text}")
-    except requests.RequestException as e:
-        logging.warning(f"⚠️ Webhook check failed: {e}")
+    except requests.RequestException as err:
+        logging.warning(f"⚠️ Could not connect to Telegram API: {err}")
 
-# ✅ Start polling with retry
+# ✅ Run bot with retry on 409 or connection errors
 def run_bot():
-    clear_webhook()  # clear any conflicting webhook
+    clear_webhook()
     try:
-        logging.info("Connecting to Telegram...")
         me = bot.get_me()
-        logging.info(f"🤖 Connected as @{me.username}")
-        print("🤖 Bot is polling now...")
+        logging.info(f"🤖 Bot connected as @{me.username}")
+        print("🤖 Bot is now polling...")
         bot.polling(non_stop=True)
     except ApiTelegramException as e:
         if "Conflict" in str(e):
-            logging.error("🚨 Conflict detected: another instance is polling. Stopping.")
+            logging.error("🚫 Conflict error: another polling session is running. Retry later or kill the other instance.")
         else:
-            logging.error(f"❌ API Exception: {e}")
+            logging.error(f"❌ Telegram API error: {e}")
         time.sleep(10)
-        run_bot()  # Retry loop
+        run_bot()  # Optional retry loop
 
 if __name__ == "__main__":
     run_bot()
