@@ -23,7 +23,11 @@ bot = telebot.TeleBot(BOT_TOKEN)
 # ✅ /start command
 @bot.message_handler(commands=['start'])
 def start_command(message):
-    welcome_text = """🟢 WELCOME TO CHAT ID BOT\nSend /id to get your Telegram ID\nCreated by @bigboss_global_trade"""
+    welcome_text = (
+        "🟢 WELCOME TO CHAT ID BOT\n"
+        "Send /id to get your Telegram ID\n"
+        "Created by @bigboss_global_trade"
+    )
     bot.reply_to(message, welcome_text)
 
 # ✅ /id command
@@ -46,7 +50,10 @@ def clear_webhook():
 
 # ✅ Run bot with retry on 409 or connection errors
 def run_bot():
+    logging.info("🔄 Checking for existing webhook...")
     clear_webhook()
+    time.sleep(2)  # 💤 Wait for Telegram to process deletion
+
     try:
         me = bot.get_me()
         logging.info(f"🤖 Bot connected as @{me.username}")
@@ -58,7 +65,9 @@ def run_bot():
         else:
             logging.error(f"❌ Telegram API error: {e}")
         time.sleep(10)
-        run_bot()  # Optional retry loop
+        run_bot()  # Retry
+    except KeyboardInterrupt:
+        logging.info("🛑 Bot manually stopped.")
 
 if __name__ == "__main__":
     run_bot()
